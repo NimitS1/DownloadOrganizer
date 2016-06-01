@@ -1,6 +1,12 @@
 package org.nimit.downloadorganizer.main;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.Console;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.CopyOption;
@@ -19,7 +25,7 @@ public class Main {
 	private Logger logger = Logger.getLogger("org.nimit.downloadorganizer.main");
 
 	
-	private static boolean copyFile(File file) throws IOException {
+	private static boolean moveFile(File file) throws IOException {
 		
 		String[] parts = file.getName().split("\\.");
 		String extension = parts[parts.length -1 ];
@@ -42,7 +48,6 @@ public class Main {
 			} catch(SecurityException sx) {
 				throw sx;
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		} else {
@@ -53,16 +58,66 @@ public class Main {
 		
 	}
 	
+	private static String getMappingPath() throws IOException {
+		
+		String path = "";
+		
+		Console c = System.console();
+		c.printf("Please enter the path of the mapping file");
+		c.readLine("%s", path);
+		FileWriter fw = new FileWriter("mapping.txt");
+		BufferedWriter bw = new BufferedWriter(fw);
+		bw.write(path);
+		bw.write("\n");
+		bw.close();
+		fw.close();
+		
+		return path;
+	}
+	
 	public static void main(String[] args) {
 		
+		String mappingPath = "";
 		try {
-			//kb = KnowledgeBase.load("C:\\Users\\snimit\\workspace\\downloadorganizer\\download_organizer.yml");
-			kb = KnowledgeBase.load("download_organizer.yml");
+			
+			//Get the location of the mapping file
+			if(Files.exists(Paths.get("mapping.txt"))){
+				FileReader i = new FileReader("mapping.txt");
+				BufferedReader br = new BufferedReader(i);
+				mappingPath = br.readLine();
+				br.close();
+				i.close();
+				
+				if(mappingPath == null) {
+					mappingPath = getMappingPath();
+				}
+				
+			} else {
+				Console c = System.console();
+				c.printf("Please enter the path of the mapping file");
+				c.readLine("%s", mappingPath);
+				FileWriter fw = new FileWriter("mapping.txt");
+				BufferedWriter bw = new BufferedWriter(fw);
+				bw.write(mappingPath);
+				bw.write("\n");
+				bw.close();
+				fw.close();
+			}
+			
+			//Parse the mapping file
+			kb = KnowledgeBase.load(mappingPath);
+
 		} catch (NoSuchFileException ex) {
-			System.out.println("The configuration file does not exist");
+			System.err.println("The configuration file does not exist");
 			return;
+		} catch (FileNotFoundException cx) {
+			System.err.println("mapping.txt is not present");
+		} catch (IOException ex) {
+			System.err.println("Faced an io exception");
 		}
 		
+		
+		//For each download folder, process every file
 		for(String folder : kb.getDownloadFolders()) {
 			File downloadDirectory = new File(folder);
 			if(downloadDirectory.isDirectory()) {
@@ -71,14 +126,14 @@ public class Main {
 					File currentFile = files[i];
 					if(currentFile.canWrite()) {    
 						try {
-							copyFile(currentFile);
+							moveFile(currentFile);
 						} catch(Exception ex) {
 							System.err.println(ex.toString());
 						}
 					}
 					/*
 					 * If we can't write the file, it is probably in use so it is better
-					 * not to copy it right now. It can be copied in the next run.
+					 * not to move it right now. It can be moved in the next run.
 					 */
 				}
 				
