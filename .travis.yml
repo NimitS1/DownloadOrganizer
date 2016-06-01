@@ -2,3 +2,19 @@ language: java
 
 jdk:
 - oraclejdk8
+
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "fBuvGufRo/QICNJRHtAmwffTohhMvUYrucF/V9Z5Zuc/abcJRht8j2fLwNBbFWS7AqbrYTHbn23S1/R01piWYt96dHT1vANg/ywPHugdKdn3cTkTbD3s1Hc5TpUyeJ7e4YoalQdQy/NsKGbhCOsZLYSg210c9VAOubTScSjQuoU6sEE9DHw3QxFGZwNbek6azs6mni4ns4fWpaGtgb1cWlOcxsnBj1rf1lpz8y/YfOcIJnGfJJlMNrA8Vj3UemdBcbzlELRiSG8YxfgUHZ+hC6LvWg9VW/z0P1YA+UQE+eEY4unXvv3a4y2gb8G803ARXZsQlv6KoZTsJS7hH83OEcrKLiX2zV/7Z+Mq8jgxfs0ZiY7xPRZDZdV0c13Y5/YHrHOEDauVX/R0bqRLqEXZHbN5/2WMkRmP/WugfdEohQo3Z//WmaYyzXsMLndgVbxccgkYbQVt5/qlCn32sgEmqM45BaaUPYRD9zzN2kg8NJjkCXrHeQfpHo7nKRYQcKxvvbb+zKWFTw4K+2WGbzYbxdoxjnv1b7gyc8j/BH7pqaNRZp+XLmCn3cGcK2n2dSUXaY/v0VVNmG4tT1XnqQE50j3XeQwVEvRetS/4a1LM1awywL3h0+TKnLnDrii1axu6d5TP+cjckR8vIAsudEl8oxPSQncB/O5d8pNe7l/qv38="
+
+addons:
+  coverity_scan:
+    project:
+      name: "NimitS1/DownloadOrganizer"
+      description: "Build submitted via Travis CI"
+    notification_email: nimit.svnit@gmail.com
+    build_command_prepend: "mvn clean"
+    build_command:   "mvn -DskipTests=true compile"
+    branch_pattern: coverity_scan
