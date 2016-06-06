@@ -1,28 +1,20 @@
 package org.nimit.downloadorganizer.main;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.Console;
+
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.yaml.snakeyaml.Yaml;
 
 public class Main {
 	
 	private static KnowledgeBase kb = null;
-	private Logger logger = Logger.getLogger("org.nimit.downloadorganizer.main");
+	private static final Logger logger = Logger.getLogger("org.nimit.downloadorganizer.main");
 
 	
 	private static boolean moveFile(File file) throws IOException {
@@ -41,7 +33,7 @@ public class Main {
 					Thread.sleep(2000);
 				}
 				
-				System.out.println("Copied " + file.getName());
+				logger.info("Copied " + file.getName());
 				return true;
 			} catch(IOException ex) {
 				throw ex;
@@ -51,69 +43,57 @@ public class Main {
 				e.printStackTrace();
 			}
 		} else {
-			System.err.println("The mapping for " + extension + " is missing");
+			logger.severe("The mapping for " + extension + " is missing");
 		}
 		
 		return false;
 		
 	}
 	
-	private static String getMappingPath() throws IOException {
+	public static int processDirectory(File downloadDirectory) {
+		int movedFiles = 0;
 		
-		String path = "";
-		
-		Console c = System.console();
-		c.printf("Please enter the path of the mapping file");
-		c.readLine("%s", path);
-		FileWriter fw = new FileWriter("mapping.txt");
-		BufferedWriter bw = new BufferedWriter(fw);
-		bw.write(path);
-		bw.write("\n");
-		bw.close();
-		fw.close();
-		
-		return path;
+		File[] files = downloadDirectory.listFiles();
+		if(files != null) {
+			for(int i = 0; i < files.length;i++) {
+				File currentFile = files[i];
+				if(currentFile.canWrite()) {    
+					try {
+						if(moveFile(currentFile)) {
+							movedFiles++;
+						}
+					} catch(Exception ex) {
+						logger.severe(ex.toString());
+					}
+				}
+				/*
+				 * If we can't write the file, it is probably in use so it is better
+				 * not to attempt to move it right now. It can be moved in the next run.
+				 */
+			}
+		}
+		return movedFiles;
 	}
 	
 	public static void main(String[] args) {
 		
 		String mappingPath = "";
+		if(args.length < 1) {
+			logger.severe("Usage: DownloadOrganizer <mapping_file_path>");
+			return;
+		}
+		mappingPath = args[0];
 		try {
-			
-			//Get the location of the mapping file
-			if(Files.exists(Paths.get("mapping.txt"))){
-				FileReader i = new FileReader("mapping.txt");
-				BufferedReader br = new BufferedReader(i);
-				mappingPath = br.readLine();
-				br.close();
-				i.close();
-				
-				if(mappingPath == null) {
-					mappingPath = getMappingPath();
-				}
-				
-			} else {
-				Console c = System.console();
-				c.printf("Please enter the path of the mapping file");
-				c.readLine("%s", mappingPath);
-				FileWriter fw = new FileWriter("mapping.txt");
-				BufferedWriter bw = new BufferedWriter(fw);
-				bw.write(mappingPath);
-				bw.write("\n");
-				bw.close();
-				fw.close();
-			}
 			
 			//Parse the mapping file
 			kb = KnowledgeBase.load(mappingPath);
 
 		} catch (NoSuchFileException ex) {
-			System.err.println("The configuration file does not exist");
+			logger.severe("The configuration file does not exist");
 			return;
-		} catch (FileNotFoundException cx) {
-			System.err.println("mapping.txt is not present");
 		} catch (IOException ex) {
-			System.err.println("Faced an io exception");
+			logger.severe("Faced an io exception");
+			return;
 		}
 		
 		
@@ -121,24 +101,11 @@ public class Main {
 		for(String folder : kb.getDownloadFolders()) {
 			File downloadDirectory = new File(folder);
 			if(downloadDirectory.isDirectory()) {
-				File[] files = downloadDirectory.listFiles();
-				for(int i = 0; i < files.length;i++) {
-					File currentFile = files[i];
-					if(currentFile.canWrite()) {    
-						try {
-							moveFile(currentFile);
-						} catch(Exception ex) {
-							System.err.println(ex.toString());
-						}
-					}
-					/*
-					 * If we can't write the file, it is probably in use so it is better
-					 * not to move it right now. It can be moved in the next run.
-					 */
-				}
+				int movedFiles = processDirectory(downloadDirectory);
+				logger.severe("Moved " + movedFiles + " files in " + downloadDirectory);
 				
 			} else {
-				System.err.println(downloadDirectory.getName() + " is not a directory!");
+				logger.severe(downloadDirectory.getName() + " is not a directory!");
 			}
 		}
 		
