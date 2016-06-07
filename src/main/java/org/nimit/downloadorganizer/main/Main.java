@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
@@ -15,32 +16,94 @@ public class Main {
 	
 	private static KnowledgeBase kb = null;
 	private static final Logger logger = Logger.getLogger("org.nimit.downloadorganizer.main");
-
+	public static final int ok = 1;
+	public static final int notADirectory = -1;
+	public static final int destinationDoesNotExist = -2;
 	
-	private static boolean moveFile(File file) throws IOException {
+	private static int moveFile(File file,String destination) throws IOException, InterruptedException {
 		
-		String[] parts = file.getName().split("\\.");
-		String extension = parts[parts.length -1 ];
-		if(kb.getFileTypeMap().containsKey(extension)){
-			String destinationFolder = kb.getFileTypeMap().get(extension);
-			CopyOption option = StandardCopyOption.REPLACE_EXISTING;
-			try {
-				Files.move(Paths.get(file.getAbsolutePath()), Paths.get(destinationFolder+"\\"+file.getName()), option);
+		File destinationDirectory = new File(destination);
+		if(destinationDirectory.exists()) {
+			
+			//Highly unlikely to fail but still!
+			if(destinationDirectory.isDirectory()) {
+				CopyOption option = StandardCopyOption.REPLACE_EXISTING;
+				Files.move(Paths.get(file.getAbsolutePath()), Paths.get(destination + "\\" + file.getName()), option);
 				
-				File destinationFile = new File(destinationFolder+"\\"+file.getName());
+				File destinationFile = new File(destination+"\\"+file.getName());
 				if(!destinationFile.canWrite()) {
 					//This is a hacky way to ensure that the copying of large files is completed					
 					Thread.sleep(2000);
 				}
 				
-				logger.info("Copied " + file.getName());
-				return true;
+				return ok;
+			} else {
+				return notADirectory;
+			}
+			
+		} else {
+			
+			//Try to create the directory
+			try {
+
+				Files.createDirectories(Paths.get(destinationDirectory.getAbsolutePath()));
+				
+			} catch (IOException ex) {
+				logger.log(Level.SEVERE, ex.toString());
+				return destinationDoesNotExist;
+			}
+
+			CopyOption option = StandardCopyOption.REPLACE_EXISTING;
+			Files.move(Paths.get(file.getAbsolutePath()), Paths.get(destination + "\\" + file.getName()), option);
+			
+			File destinationFile = new File(destination+"\\"+file.getName());
+			
+			int counter = 0;
+			if(!destinationFile.canWrite()) {
+				//This is a hacky way to ensure that the copying of large files is completed					
+				Thread.sleep(2000);
+				
+				//If the file is huge, the UI will not refresh for quite a while
+				//Notify the user of a file transfer in progress
+				counter++;
+				if(counter == 5) {
+					System.out.println(file.getName() + " is a big file. Taking some time to transfer");
+				}
+			}	
+			return ok;
+			
+		}
+
+	}
+
+	
+	private static boolean processFile(File file) throws IOException, InterruptedException {
+
+		String[] parts = file.getName().split("\\.");
+		String extension = parts[parts.length -1 ];
+		if(kb.getFileTypeMap().containsKey(extension)){
+			String destinationFolder = kb.getFileTypeMap().get(extension);
+			try {
+
+				int status = moveFile(file,destinationFolder);
+				if(status == ok) {
+				
+					logger.info("Copied " + file.getName());
+					return true;
+				} else if(status == notADirectory) {
+					logger.severe(destinationFolder + " is not a directory!");
+					return false;
+				} else if(status == destinationDoesNotExist) {
+					logger.severe(destinationFolder + " does not exist and could not create it");
+					return false;
+				}
 			} catch(IOException ex) {
 				throw ex;
 			} catch(SecurityException sx) {
 				throw sx;
 			} catch (InterruptedException e) {
 				e.printStackTrace();
+				throw e;
 			}
 		} else {
 			logger.severe("The mapping for " + extension + " is missing");
@@ -53,13 +116,16 @@ public class Main {
 	public static int processDirectory(File downloadDirectory) {
 		int movedFiles = 0;
 		
+		System.out.println("Started processing " + downloadDirectory);
 		File[] files = downloadDirectory.listFiles();
 		if(files != null) {
 			for(int i = 0; i < files.length;i++) {
 				File currentFile = files[i];
-				if(currentFile.canWrite()) {    
+				
+				//Bug!! Read only files will be skipped
+				if(currentFile.canWrite() && !currentFile.isDirectory()) {    
 					try {
-						if(moveFile(currentFile)) {
+						if(processFile(currentFile)) {
 							movedFiles++;
 						}
 					} catch(Exception ex) {
@@ -91,9 +157,6 @@ public class Main {
 		} catch (NoSuchFileException ex) {
 			logger.severe("The configuration file does not exist");
 			return;
-		} catch (IOException ex) {
-			logger.severe("Faced an io exception");
-			return;
 		}
 		
 		
@@ -102,7 +165,8 @@ public class Main {
 			File downloadDirectory = new File(folder);
 			if(downloadDirectory.isDirectory()) {
 				int movedFiles = processDirectory(downloadDirectory);
-				logger.severe("Moved " + movedFiles + " files in " + downloadDirectory);
+				logger.severe("Moved " + movedFiles + " files from " + downloadDirectory);
+				System.out.println("Moved " + movedFiles + " files from " + downloadDirectory);
 				
 			} else {
 				logger.severe(downloadDirectory.getName() + " is not a directory!");

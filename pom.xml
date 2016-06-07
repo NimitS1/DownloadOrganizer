@@ -19,6 +19,12 @@
   			<artifactId>maven-assembly-plugin</artifactId>
   			<version>2.6</version>
 	        <configuration>
+	          <archive>
+  					<manifest>
+  						<addClasspath>true</addClasspath>
+  						<mainClass>org.nimit.downloadorganizer.main.Main</mainClass>
+  					</manifest>
+  			  </archive>
 	          <descriptorRefs>
 	            <descriptorRef>jar-with-dependencies</descriptorRef>
 	          </descriptorRefs>
@@ -30,6 +36,7 @@
   			<configuration>
   				<archive>
   					<manifest>
+  						<addClasspath>true</addClasspath>
   						<mainClass>org.nimit.downloadorganizer.main.Main</mainClass>
   					</manifest>
   				</archive>
