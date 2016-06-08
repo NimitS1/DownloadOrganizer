@@ -1,5 +1,5 @@
 # DownloadOrganizer
-A small utility to organize my downloads
+A small utility to organize my downloads.
 
 [![Build Status](https://travis-ci.org/NimitS1/DownloadOrganizer.svg?branch=master)](https://travis-ci.org/NimitS1/DownloadOrganizer)
 <a href="https://scan.coverity.com/projects/nimits1-downloadorganizer">
@@ -15,7 +15,6 @@ A small utility to organize my downloads
 
 ```bash
 mvn clean
-mvn compile
 mvn package assembly:single
 ```
 There should be two jars in  your target directory:
@@ -23,10 +22,10 @@ There should be two jars in  your target directory:
 * DownloadOrganizer-0.0.1-SNAPSHOT-jar-with-dependencies.jar
 
 ###Using Download Organizer
-Run the following command:
-java -jar <location_of_target_directory>\DownloadOrganizer-0.0.1-SNAPSHOT-jar-with-dependencies.jar <Path_to_your_yml_file>
+The jar file takes a yaml configuration file as an input.
+The configuration file is used to mention the directories where files are downloaded by default and the desired location where files should be moved to.
 
-###Sample YML file
+**Sample YML file**
 ```yaml
 downloadFolders:
  - C:\Users\snimit\Downloads\
@@ -50,3 +49,9 @@ fileTypeMap:
  msi: C:\Users\snimit\Downloads\executables
  js: C:\Users\snimit\Downloads\scripts
  ```
+
+
+The command to be executed:
+``` bash
+java -jar <location_of_target_directory>\DownloadOrganizer-0.0.1-SNAPSHOT-jar-with-dependencies.jar <Path_to_your_yml_file>
+```
