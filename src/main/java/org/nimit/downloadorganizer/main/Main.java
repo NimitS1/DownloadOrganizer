@@ -20,6 +20,25 @@ public class Main {
 	public static final int notADirectory = -1;
 	public static final int destinationDoesNotExist = -2;
 	
+	private static int move(File file,String destination) throws IOException, InterruptedException {
+
+		CopyOption option = StandardCopyOption.REPLACE_EXISTING;
+		Files.move(Paths.get(file.getAbsolutePath()), Paths.get(destination + "\\" + file.getName()), option);
+		
+		File destinationFile = new File(destination+"\\"+file.getName());
+		
+		int counter = 0;
+		while(!destinationFile.canWrite()) {
+			//This is a hacky way to ensure that the copying of large files is completed
+			counter++;
+			if(counter == 5) {
+				System.out.println(file.getName() + " is a big file. Taking some time to transfer");
+			}
+			Thread.sleep(2000);
+		}		
+		return ok;
+	}
+	
 	private static int moveFile(File file,String destination) throws IOException, InterruptedException {
 		
 		File destinationDirectory = new File(destination);
@@ -27,16 +46,7 @@ public class Main {
 			
 			//Highly unlikely to fail but still!
 			if(destinationDirectory.isDirectory()) {
-				CopyOption option = StandardCopyOption.REPLACE_EXISTING;
-				Files.move(Paths.get(file.getAbsolutePath()), Paths.get(destination + "\\" + file.getName()), option);
-				
-				File destinationFile = new File(destination+"\\"+file.getName());
-				if(!destinationFile.canWrite()) {
-					//This is a hacky way to ensure that the copying of large files is completed					
-					Thread.sleep(2000);
-				}
-				
-				return ok;
+				return move(file, destination);
 			} else {
 				return notADirectory;
 			}
@@ -53,24 +63,7 @@ public class Main {
 				return destinationDoesNotExist;
 			}
 
-			CopyOption option = StandardCopyOption.REPLACE_EXISTING;
-			Files.move(Paths.get(file.getAbsolutePath()), Paths.get(destination + "\\" + file.getName()), option);
-			
-			File destinationFile = new File(destination+"\\"+file.getName());
-			
-			int counter = 0;
-			if(!destinationFile.canWrite()) {
-				//This is a hacky way to ensure that the copying of large files is completed					
-				Thread.sleep(2000);
-				
-				//If the file is huge, the UI will not refresh for quite a while
-				//Notify the user of a file transfer in progress
-				counter++;
-				if(counter == 5) {
-					System.out.println(file.getName() + " is a big file. Taking some time to transfer");
-				}
-			}	
-			return ok;
+			return move(file,destination);
 			
 		}
 
