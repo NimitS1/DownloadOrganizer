@@ -1,0 +1,17 @@
+txt: C:\Users\snimit\Downloads\documents
+doc: C:\Users\snimit\Downloads\documents
+docx: C:\Users\snimit\Downloads\documents
+ppt: C:\Users\snimit\Downloads\documents
+pptx: C:\Users\snimit\Downloads\documents
+zip: C:\Users\snimit\Downloads\zipped files
+rar: C:\Users\snimit\Downloads\zipped files
+jpg: C:\Users\snimit\Downloads\images
+png: C:\Users\snimit\Downloads\images
+mobi: C:\Users\snimit\Downloads\ebooks
+epub: C:\Users\snimit\Downloads\ebooks
+mp4: C:\Users\snimit\Downloads\media
+exe: C:\Users\snimit\Downloads\executables
+sh: C:\Users\snimit\Downloads\executables
+jar: C:\Users\snimit\Downloads\executables
+msi: C:\Users\snimit\Downloads\executables
+js: C:\Users\snimit\Downloads\scripts
